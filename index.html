@@ -1,0 +1,419 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Участки · ЦИАН</title>
+<style>
+:root {
+  --bg:#f6f7f9; --card:#fff; --ink:#16191d; --mut:#6b7280; --line:#e5e7eb;
+  --izhs:#1f4e79; --snt:#2f7a3e; --ok:#1a7f37; --star:#e0a80d; --chipbg:#fff;
+  --accent:#1f4e79; --segbg:#ececf0;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg:#101215; --card:#191c21; --ink:#e8eaed; --mut:#9aa3af; --line:#2a2f36;
+          --izhs:#4a8fd0; --snt:#4fae64; --ok:#4caf62; --star:#f0be2e; --chipbg:#22262c;
+          --accent:#3a7ebf; --segbg:#20242a; }
+}
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+  font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif; }
+header { padding:28px 24px 12px; max-width:1400px; margin:0 auto; }
+h1 { font-size:22px; margin:0 0 6px; letter-spacing:-.01em; }
+.sub { color:var(--mut); font-size:13px; max-width:70ch; }
+.stats { display:flex; gap:22px; flex-wrap:wrap; margin-top:14px; }
+.stat b { display:block; font-size:19px; }
+.stat span { color:var(--mut); font-size:12px; }
+
+.bar { position:sticky; top:0; z-index:5; background:var(--bg);
+  border-bottom:1px solid var(--line); padding:10px 24px 8px; margin-top:14px; }
+.bar-in { max-width:1400px; margin:0 auto; display:flex; gap:14px; align-items:center; flex-wrap:wrap; }
+.group { display:flex; align-items:center; gap:7px; }
+.group > .glabel { color:var(--mut); font-size:11px; text-transform:uppercase;
+  letter-spacing:.06em; font-weight:600; }
+.seg { display:flex; background:var(--segbg); border:1px solid var(--line);
+  border-radius:99px; padding:2px; gap:2px; }
+.chip { border:0; background:none; color:var(--mut); cursor:pointer;
+  padding:5px 12px; border-radius:99px; font-size:12.5px; font-family:inherit;
+  display:flex; align-items:center; gap:5px; white-space:nowrap; }
+.chip:hover { color:var(--ink); }
+.chip[aria-pressed="true"] { background:var(--accent); color:#fff; font-weight:600;
+  box-shadow:0 1px 3px rgba(0,0,0,.18); }
+.chip[aria-pressed="true"]:hover { color:#fff; }
+.chip .tick { font-size:11px; opacity:0; width:0; transition:opacity .12s; }
+.chip[aria-pressed="true"] .tick { opacity:1; width:auto; }
+.btn { border:1px solid var(--line); background:var(--chipbg); color:var(--mut); cursor:pointer;
+  padding:5px 11px; border-radius:8px; font-size:12.5px; font-family:inherit; }
+.btn:hover { color:var(--ink); border-color:var(--mut); }
+.bar .sep { flex:1; }
+.status { max-width:1400px; margin:6px auto 0; font-size:12px; color:var(--mut); }
+.status b { color:var(--ink); font-weight:600; }
+
+.grid { display:grid; gap:14px; padding:16px 24px 40px; max-width:1400px; margin:0 auto;
+  grid-template-columns:repeat(auto-fill,minmax(258px,1fr)); }
+.card { position:relative; background:var(--card); border:1px solid var(--line);
+  border-radius:12px; overflow:hidden; display:flex; flex-direction:column;
+  transition:box-shadow .15s, transform .15s, border-color .15s; }
+.card:hover { box-shadow:0 6px 20px rgba(0,0,0,.12); transform:translateY(-2px); }
+.card.picked { border-color:var(--ok); box-shadow:0 0 0 1px var(--ok) inset; }
+.card.hidden { display:none; }
+.link { text-decoration:none; color:inherit; display:flex; flex-direction:column; flex:1; }
+.thumb { position:relative; aspect-ratio:4/3; background:var(--line); }
+.thumb img { width:100%; height:100%; object-fit:cover; display:block; }
+.noimg { display:flex; align-items:center; justify-content:center; height:100%;
+  color:var(--mut); font-size:12px; }
+.badge { position:absolute; left:8px; bottom:8px; padding:3px 8px; border-radius:99px;
+  font-size:11px; font-weight:600; color:#fff; background:var(--izhs); }
+.badge.snt { background:var(--snt); }
+.num { position:absolute; right:8px; top:8px; background:rgba(0,0,0,.55); color:#fff;
+  font-size:11px; padding:2px 7px; border-radius:99px; }
+.body { padding:11px 12px 10px; display:flex; flex-direction:column; gap:3px; flex:1; }
+.price { font-size:17px; font-weight:650; letter-spacing:-.01em; }
+.meta { color:var(--mut); font-size:12.5px; }
+.dist { color:var(--ink); opacity:.75; }
+.addr { font-size:12.5px; margin-top:4px; }
+.seller { color:var(--mut); font-size:11.5px; margin-top:3px; }
+
+.marks { display:flex; align-items:center; justify-content:space-between; gap:8px;
+  padding:8px 10px 9px; border-top:1px solid var(--line); }
+.chk { display:flex; align-items:center; gap:6px; background:none; border:0; cursor:pointer;
+  font:inherit; font-size:12.5px; color:var(--mut); padding:2px 4px; border-radius:6px; }
+.chk .box { width:18px; height:18px; border:1.5px solid var(--line); border-radius:5px;
+  display:flex; align-items:center; justify-content:center; font-size:12px; color:transparent; }
+.chk[aria-pressed="true"] { color:var(--ok); font-weight:600; }
+.chk[aria-pressed="true"] .box { background:var(--ok); border-color:var(--ok); color:#fff; }
+.stars { display:flex; gap:1px; }
+.star { background:none; border:0; cursor:pointer; font-size:17px; line-height:1;
+  color:var(--line); padding:2px 1px; }
+.star.on { color:var(--star); }
+.star:hover { transform:scale(1.12); }
+
+footer { max-width:1400px; margin:0 auto; padding:0 24px 48px; color:var(--mut); font-size:12px; }
+footer p { max-width:80ch; }
+</style></head><body>
+<header>
+  <h1>Участки под Москвой — выборка с ЦИАН</h1>
+  <div class="sub">До 15 млн ₽ · до 10 км от МКАД · 6–10 соток · ИЖС или садоводство · заявлены электричество, газ и водоснабжение. Выгружено 03.09.2026.</div>
+  <div class="stats">
+    <div class="stat"><b id="totalN">—</b><span>участков</span></div>
+    <div class="stat"><b id="splitN">—</b><span>ИЖС / садоводство</span></div>
+    <div class="stat"><b id="medN">—</b><span>медианная цена</span></div>
+    <div class="stat"><b id="pickedN">0</b><span>отмечено галочкой</span></div>
+  </div>
+</header>
+
+<div class="bar">
+  <div class="bar-in">
+    <div class="group"><span class="glabel">Показать</span>
+      <div class="seg" role="group" aria-label="Фильтр">
+        <button class="chip" id="f-all" aria-pressed="true"><span class="tick">✓</span>Все</button>
+        <button class="chip" id="f-picked" aria-pressed="false"><span class="tick">✓</span>С галочкой</button>
+        <button class="chip" id="f-star" aria-pressed="false"><span class="tick">✓</span>Со звёздами</button>
+        <button class="chip" id="f-3" aria-pressed="false"><span class="tick">✓</span>Только 3★</button>
+      </div>
+    </div>
+    <div class="group"><span class="glabel">Сортировка</span>
+      <div class="seg" role="group" aria-label="Сортировка">
+        <button class="chip" id="sortDist" aria-pressed="true"><span class="tick">↓</span>По близости</button>
+        <button class="chip" id="sortPrice" aria-pressed="false"><span class="tick">↓</span>По цене</button>
+        <button class="chip" id="sortRate" aria-pressed="false"><span class="tick">↓</span>По оценке</button>
+      </div>
+    </div>
+    <span class="sep"></span>
+    <button class="btn" id="exportBtn">Сохранить отметки</button>
+    <button class="btn" id="importBtn">Загрузить отметки</button>
+    <input type="file" id="importFile" accept="application/json" hidden>
+    <button class="btn" id="resetBtn">Сбросить</button>
+  </div>
+  <div class="status" id="status"></div>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<footer>
+<p><b>Отметки.</b> Галочка и звёзды (1–3) сохраняются в этом браузере автоматически. При открытии файла на другом компьютере отметки не перенесутся — для этого есть «Сохранить отметки» (скачает JSON) и «Загрузить отметки».</p>
+<p><b>Как читать.</b> «≈ км от МКАД» — расчёт по координатам объявления (расстояние до центра Москвы минус 17,5 км, средний радиус кольца), погрешность ±2 км; собственное поле ЦИАН «км по шоссе» для ближнего пояса часто завышено, поэтому не используется.</p>
+<p><b>Коммуникации.</b> Отбор сделан фильтром ЦИАН «электричество + газ + водоснабжение» — то есть их наличие заявил продавец. Канализация в фильтр не входила. Наличие сетей и статус земли обязательно проверять по документам.</p>
+<p>Фотографии подгружаются напрямую с сервера ЦИАН, поэтому страницу нужно открывать при наличии интернета. Клик по карточке открывает объявление.</p>
+</footer>
+
+<script type="text/plain" id="dataset">id|price|area|status|dist|hw|addr|seller|photo|host
+330207695|5800000|6.19|i|0.0|Носовихинское|Московская область, Балашиха, микрорайон Салтыковка, Носовихинское шоссе, 33|Собственник|uchastok-saltykovka-nosovihinskoe-shosse-2883180521-4.jpg|balashikha.cian.ru
+330410268|9450000|6.0|g|0.0|Горьковское|Московская область, городской округ Балашиха, ТСН ДНТ Металлург, Добрая улица, 293-294|Собственник|dom-dnt-metallurg-dobraya-ulica-2887314653-4.jpg|balashikha.cian.ru
+321845504|12900000|10.0|g|0.0|Горьковское|Московская область, городской округ Балашиха, ПК СТ Металлург-1, 97|Собственник|uchastok-metallurg1-2630160466-4.jpg|balashikha.cian.ru
+328375732|13300000|6.25|i|0.0|Киевское|Москва, поселение Мосрентген, деревня Дудкино, СНТ Дары Природы, 349||uchastok-dary-prirody-2843829115-4.jpg|www.cian.ru
+331262032|13700000|6.0|g|0.0|Киевское|Москва, поселение Мосрентген, деревня Дудкино, СНТ Круиз, 239|Собственник||www.cian.ru
+317706650|14500000|9.0|i|0.0|Носовихинское|Московская область, Балашиха, микрорайон Салтыковка, Носовихинское шоссе, 3|Жилстройсервис||balashikha.cian.ru
+331147040|14999000|9.0|i|0.0|Киевское|Москва, район Коммунарка, деревня Дудкино, СНТ Круиз, 5-я улица,|Элиза Мусаевна Ибрагимова|2903235786-4.jpg|www.cian.ru
+331436130|14999999|6.0|g|0.0|Сколковское|Москва, поселение Мосрентген, деревня Дудкино, СНТ Дары Природы, 106|Игорь Лабойко|uchastok-dary-prirody-2919167083-4.jpg|www.cian.ru
+333455485|11890000|8.0|i|0.3|Ярославское|Московская область, Мытищи, Северный переулок||uchastok-mytishci-severnyy-pereulok-2954986119-4.jpg|mytishchi.cian.ru
+328092241|8700000|6.0|g|1.2|Осташковское|Московская область, городской округ Мытищи, деревня Ховрино, СНТ Бородино, Богоявленская улица|Собственник|uchastok-borodino-bogoyavlenskaya-ulica-2835693025-4.jpg|mytishchi.cian.ru
+333213181|13950000|10.0|i|1.4|Носовихинское|Московская область, Балашиха, микрорайон Салтыковка, Ковровская улица, 15||uchastok-saltykovka-kovrovskaya-ulica-2949481577-4.jpg|balashikha.cian.ru
+329857184|14200000|6.0|i|1.6|Новорижское|Московская область, городской округ Красногорск, СНТ Южное, 44С|Собственник|uchastok-yuzhnoe-2875803932-4.jpg|krasnogorsk.cian.ru
+333544147|9500000|6.12|g|2.1|Осташковское|Московская область, городской округ Мытищи, деревня Ховрино, СНТ Ховрино-1, 20||uchastok-hovrino1-2956794085-4.jpg|mytishchi.cian.ru
+323557608|14900000|7.53|i|2.5|Носовихинское|Московская область, Балашиха, микрорайон Салтыковка, Садовая улица|Собственник|uchastok-saltykovka-2688592779-4.jpg|balashikha.cian.ru
+332308092|8800000|6.3|g|2.8|Каширское|Московская область, Ленинский городской округ, СНТ Анис, 316|Собственник|uchastok-anis-2929744362-4.jpg|vidnoye.cian.ru
+332642035|9500000|6.0|g|2.9|Минское|Московская область, Одинцовский городской округ, деревня Мамоново, СНТ имени 40 лет Октября, 86|||zvenigorod.cian.ru
+317969102|13050000|9.0|i|2.9|Ленинградское|Московская область, Химки, квартал Старбеево, улица Карла Маркса|Дмитрий Красюков|2501382894-4.jpg|khimki.cian.ru
+315008235|13050000|9.0|i|2.9|Ленинградское|Московская область, Химки, квартал Старбеево, улица Карла Маркса|Собственник|uchastok-starbeevo-karla-marksa-ulica-2436653448-4.jpg|khimki.cian.ru
+332696593|9600000|6.0|i|3.1|Носовихинское|Московская область, Балашихинский район, Салтыковка мкр, Лесные поляны ул., д.111|Александр Клещевич||balashikha.cian.ru
+321457239|9600000|6.0|i|3.1|Носовихинское|Московская область, Балашиха, микрорайон Салтыковка, улица Лесные Поляны, 111|Виктор Прокудин|uchastok-saltykovka-ulica-lesnye-polyany-2616240351-4.jpg|balashikha.cian.ru
+333096134|12600000|6.3|g|3.4|Каширское|Московская область, Ленинский городской округ, СНТ Парус, Новоащеринский проезд|Собственник|uchastok-parus-novoashcerinskiy-proezd-2946966273-4.jpg|vidnoye.cian.ru
+332942623|15000000|10.0|i|3.5|Ленинградское|Московская область, Химки, Старбеево квартал|KASKAD Real Estate|2945490149-4.jpg|khimki.cian.ru
+328094429|10000000|10.0|g|3.9|Осташковское|Московская область, городской округ Мытищи, деревня Беляниново|Собственник|uchastok-belyaninovo-2835735777-4.jpg|mytishchi.cian.ru
+325687195|9250000|6.0|i|4.1|Каширское|Московская область, Ленинский городской округ, деревня Картино, ТИЗ Картино-2|Екатерина Булгакова|uchastok-kartino2-2767526553-4.jpg|vidnoye.cian.ru
+307007174|9900000|10.0|g|4.1|Осташковское|Московская область, Мытищи, ТСН СТ Дальние Вёшки||uchastok-admiral-2261517828-4.jpg|mytishchi.cian.ru
+324814341|10000000|10.0|g|4.1|Осташковское|Московская область, Мытищи, ТСН СТ Дальние Вешки|Собственник|uchastok-st-dalnie-veshki-2729383552-4.jpg|mytishchi.cian.ru
+333334779|6960000|7.1|i|4.3|Ленинградское|Московская область, Химки, микрорайон Клязьма-Старбеево, квартал Мишино|Максим Цыганков||khimki.cian.ru
+319475951|9000000|6.0|i|4.3|Симферопольское|Московская область, Ленинский городской округ, деревня Жабкино, микрорайон Булатниково, 11||uchastok-zhabkino-leninskaya-ulica-2552359163-4.jpg|vidnoye.cian.ru
+332148080|10999999|6.0|i|4.4|Калужское|Москва, квартал № 21Б|Собственник|uchastok21b-2926057937-4.jpg|www.cian.ru
+328891388|14500000|6.0|g|4.4|Симферопольское|Московская область, Ленинский городской округ, деревня Жабкино, СНТ Нектар, 203|Собственник|uchastok-nektar-2854356442-4.jpg|vidnoye.cian.ru
+328231197|8600000|6.0|g|4.5|Симферопольское|Московская область, Ленинский городской округ, деревня Жабкино, СНТ Нектар, 111|Собственник|uchastok-nektar-2838781839-4.jpg|vidnoye.cian.ru
+331049192|13000000|6.3|g|4.5|Волоколамское|Московская область, городской округ Красногорск, СНТ Вахтанговец, Левая улица|Александр Мазур|uchastok-vahtangovec-levaya-ulica-2901045791-4.jpg|krasnogorsk.cian.ru
+312467661|15000000|10.0|i|4.6|Симферопольское|Московская область, Ленинский городской округ, КП Измайлово, Речная улица|Новая Жизнь||vidnoye.cian.ru
+329563856|7600000|6.85|i|4.7|Каширское|Московская область, Ленинский район, Остров с.|Надежда Бурко|2868388219-4.jpg|vidnoye.cian.ru
+317366195|6800000|6.4|i|4.8|Новорязанское|Московская область, городской округ Люберцы, посёлок городского типа Марусино, территория СНТ СН Зенино, 6-й проезд|Собственник|uchastok-zenino-6-y-proezd-2484840495-4.jpg|lyubertsy.cian.ru
+319582563|6999999|7.0|g|4.8|Новорязанское|Московская область, городской округ Люберцы, посёлок городского типа Марусино, СНТ Зенино, 245|Феликс Град|uchastok-zenino-2555727228-4.jpg|lyubertsy.cian.ru
+332583583|6500000|6.0|g|5.0|Новорязанское|Московская область, Люберецкий район, Люберцы г.|Валерий Назаров|2936116345-4.jpg|lyubertsy.cian.ru
+326966273|6800000|6.8|i|5.1|Каширское|Московская область, Ленинский городской округ, село Остров, Усадебная улица|Собственник|uchastok-ostrov-usadebnaya-ulica-2807631018-4.jpg|vidnoye.cian.ru
+329145858|12400000|6.0|i|5.3|Дмитровское|Московская область, городской округ Мытищи, деревня Афанасово, Невская улица|Евгений Зелинский|uchastok-afanasovo-nevskaya-ulica-2927145087-4.jpg|mytishchi.cian.ru
+325590513|6200000|6.8|i|5.4|Каширское|Московская область, Ленинский городской округ, село Остров, Преображенская улица|Собственник|uchastok-ostrov-preobrazhenskaya-ulica-2777138997-4.jpg|vidnoye.cian.ru
+329392253|8400000|6.0|i|5.4|Ленинградское|Московская область, Химки, микрорайон Клязьма-Старбеево, квартал Вашутино, 405|Собственник|uchastok-vashutino-2940327696-4.jpg|khimki.cian.ru
+332431233|9450000|6.0|i|5.4|Ленинградское|Московская область, Химки, микрорайон Клязьма-Старбеево, квартал Вашутино, 405|Сергей Шатунов|uchastok-vashutino-2932630721-4.jpg|khimki.cian.ru
+326135789|3000000|6.1|i|5.5|Симферопольское|Московская область, Ленинский городской округ, деревня Спасское||uchastok-spasskoe-2782236659-4.jpg|vidnoye.cian.ru
+333186729|10000000|7.0|i|5.5|Ярославское|Московская область, Королёв, Болшевское шоссе, 13|Кристина Три Ступени|uchastok-korolev-bolshevskoe-shosse-2948839773-4.jpg|korolev.cian.ru
+324123223|4500000|6.0|i|5.6|Новорязанское|Московская область, городской округ Люберцы, посёлок городского типа Томилино, улица Радищева, 1А|Собственник|uchastok-tomilino-radishceva-ulica-2706626902-4.jpg|lyubertsy.cian.ru
+329978814|7990000|7.12|i|5.9|Новорязанское|Московская область, городской округ Люберцы, посёлок городского типа Томилино, улица Чехова|Сергей Сокуренко|2940671926-4.jpg|lyubertsy.cian.ru
+331692341|12000000|6.0|g|5.9|Калужское|Москва, посёлок Коммунарка, СНТ Берёзка-Коммунарка-1, 41|Юлия Губарева|uchastok-berezkakommunarka1-2915752582-4.jpg|www.cian.ru
+285695545|15000000|6.59|i|5.9|Ярославское|Московская область, Мытищи, улица Чкалова|Собственник|86/787/361/dom-mytishci-ulica-chkalova-1637876867-4.jpg|mytishchi.cian.ru
+328526022|14000000|7.56|i|6.4|Симферопольское|Московская область, Ленинский городской округ, Видное, 1-й Калиновский проезд, 11|Собственник|uchastok-vidnoe-1-y-kalinovskiy-proezd-2846835459-4.jpg|vidnoye.cian.ru
+234412200|10500000|10.0|i|6.8|Ярославское|Московская область, городской округ Пушкинский, посёлок Челюскинский, Водопроводная улица, 14|Собственник|3/932/798/dom-chelyuskinskiy-vodoprovodnaya-ulica-897239376-4.jpg|ivanteyevka.cian.ru
+333186435|5100000|6.39|i|6.9|Каширское|Московская обл, г Видное, пгт Мисайлово, мкр Солнечный остров, ул Взлетная|Илья Севостьянов|2948829807-4.jpg|vidnoye.cian.ru
+331421188|9500000|9.0|i|7.2|Новокаширское|Московская область, Ленинский район, д/о Суханово п.|Надежда Бурко|2909758615-4.jpg|vidnoye.cian.ru
+326673333|14500000|8.0|i|7.3|Калужское|Москва, деревня Сосенки, 393|Марина Захарченко|uchastok-sosenki-2799728002-4.jpg|www.cian.ru
+328469301|7700000|6.4|g|7.5|Каширское|Московская область, город Видное, микрорайон Солнечный остров (пгт Мисайлово), улица Преображенская, дом 78|Юрий Мантров|2845791809-4.jpg|vidnoye.cian.ru
+327387652|3500000|9.0|i|7.6|Каширское|Московская область, Ленинский городской округ, село Ермолино||uchastok-ermolino-2819306592-4.jpg|vidnoye.cian.ru
+305535039|6940000|7.15|g|7.6|Щелковское|Московская область, Балашихинский район, СНТ Поляна тер.|Ольга Голубева|2952417966-4.jpg|balashikha.cian.ru
+333467985|9000000|9.0|i|7.9|Симферопольское|Московская область, Ленинский городской округ, посёлок городского типа Лопатино|Собственник|uchastok-lopatino-2955243068-4.jpg|vidnoye.cian.ru
+324991344|6500000|8.0|g|8.0|Дмитровское|Московская область, Долгопрудный, СНТ Мичуринец-4|Собственник|uchastok-michurinec4-2735172345-4.jpg|dolgoprudny.cian.ru
+328955458|6200000|8.0|g|8.1|Дмитровское|Московская область, городской округ Долгопрудный, Долгопрудный, садовое товарищество Мичуринец-4,|Екатерина Викторовна Хохлова|2861294705-4.jpg|dolgoprudny.cian.ru
+331780604|10500000|9.0|i|8.1|Каширское|Московская область, Ленинский городской округ, деревня Пуговичино, 44|Собственник|dom-pugovichino-2917742142-4.jpg|vidnoye.cian.ru
+329149501|10000000|8.0|i|8.2|Пятницкое|Московская область, городской округ Красногорск, деревня Аристово, улица Детства, 22|DomLex|uchastok-aristovo-detstva-ulica-2898605021-4.jpg|krasnogorsk.cian.ru
+330070245|11000000|8.8|i|8.2|Дмитровское|Московская область, Долгопрудный, микрорайон Шереметьевский, улица Чапаева, 120|Собственник|uchastok-sheremetevskiy-ulica-chapaeva-2880494768-4.jpg|dolgoprudny.cian.ru
+327282417|3000000|7.2|i|8.3|Каширское|Московская область, Ленинский городской округ, деревня Пуговичино||uchastok-pugovichino-2816510568-4.jpg|vidnoye.cian.ru
+333363415|13000000|8.0|i|8.3|Пятницкое|Московская область, городской округ Красногорск, деревня Аристово, улица Детства|Moscow Properties|uchastok-aristovo-detstva-ulica-2953010574-4.jpg|krasnogorsk.cian.ru
+332650458|6800000|6.0|g|8.4|Каширское|Московская область, Ленинский городской округ, деревня Пуговичино, КЛПХ Колхозник|Лайв Эстейт||vidnoye.cian.ru
+286943744|14200000|8.0|i|8.4|Пятницкое|Московская область, городской округ Красногорск, деревня Аристово, улица Юности|Собственник|53/139/961/uchastok-aristovo-yunosti-ulica-1699313550-4.jpg|krasnogorsk.cian.ru
+327282022|2800000|6.5|i|8.6|Симферопольское|Московская область, Ленинский городской округ, деревня Петрушино||uchastok-petrushino-2816503104-4.jpg|vidnoye.cian.ru
+331919960|14700000|6.0|i|8.8|Калужское|Москва, деревня Ямонтово, Раздольная улица, 1А|Вадим Петров|uchastok-yamontovo-razdolnaya-ulica-2920909368-4.jpg|www.cian.ru
+331748776|12000000|6.0|g|8.9|Дмитровское|Московская область, городской округ Мытищи, деревня Красная Горка, Красногорская улица|||mytishchi.cian.ru
+333539575|5000000|7.0|i|9.0|Симферопольское|Московская область, Ленинский городской округ, деревня Суханово||uchastok-suhanovo-2956718120-4.jpg|vidnoye.cian.ru
+328210714|13430000|6.0|i|9.0|Калужское|Москва, СНТ Ветеран, 170|Собственник|uchastok-veteran-2859104583-4.jpg|www.cian.ru
+328100437|6850000|6.9|i|9.2|Ленинградское|Московская область, Химки, микрорайон Подрезково, Лыжная улица|Олег Филатов|uchastok-podrezkovo-lyzhnaya-ulica-2835864532-4.jpg|khimki.cian.ru
+323562612|10000000|8.0|g|9.3|Дмитровское|Московская область, городской округ Мытищи, деревня Красная Горка, 1-я Садовая улица|Собственник|uchastok-krasnaya-gorka-1-ya-sadovaya-ulica-2891485364-4.jpg|mytishchi.cian.ru
+330564452|13400000|6.0|g|9.3|Калужское|Москва, район Щербинка, СНТ Язово|Собственник|uchastok-yazovo-2890198560-4.jpg|www.cian.ru
+330150660|5600000|6.0|i|9.5|Калужское|Москва, СНТ Ветеран, 10-й проезд|Собственник|uchastok-veteran-10-y-proezd-2942118477-4.jpg|www.cian.ru
+326135976|2939399|7.0|i|9.7|Симферопольское|Московская область, городской округ Подольск, деревня Федюково, Зелёная улица||uchastok-fedyukovo-zelenaya-ulica-2782246995-4.jpg|podolsk.cian.ru
+329713009|12500000|6.0|i|9.8|Калужское|Москва, район Щербинка, СНТ Язово, 48|Собственник|uchastok-yazovo-2872298737-4.jpg|www.cian.ru
+327386920|3100000|8.5|i|9.9|Симферопольское|Московская область, городской округ Подольск, деревня Федюково||uchastok-fedyukovo-2819282822-4.jpg|podolsk.cian.ru
+331794548|8261000|7.5|i|10.1|Ленинградское|Московская область, городской округ Химки, садовое товарищество Горетовка, Спортивная улица|Олег Филатов|uchastok-goretovka-sportivnaya-ulica-2918056133-4.jpg|khimki.cian.ru
+326136012|2810000|9.1|i|10.4|Симферопольское|Московская область, городской округ Подольск, деревня Боборыкино||uchastok-boborykino-2782247128-4.jpg|podolsk.cian.ru
+328966286|7700000|6.41|i|10.5|Дмитровское|Московская область, Еремино д., д.87|Home Market|2855821877-4.jpg|mytishchi.cian.ru
+332753460|7029500|8.27|i|10.7|Каширское|Московская область, Ленинский район, д. Орлово, Коттеджный посёлок Орловъ|Астерра|2939958178-4.jpg|vidnoye.cian.ru
+327282735|2090000|7.0|i|10.9|Симферопольское|Московская область, городской округ Подольск, деревня Малое Брянцево||uchastok-maloe-bryancevo-2816528209-4.jpg|podolsk.cian.ru
+332054904|13000000|10.0|i|10.9|Осташковское|Московская область, Пушкино, микрорайон Звягино, 1-я Полевая улица, 16|Ирина Худик|2924236626-4.jpg|pushkino.cian.ru
+311658926|12500000|8.77|g|11.1|Каширское|Московская область, Ленинский городской округ, СНТ Изумруд, 41|Собственник|uchastok-izumrud-2359360281-4.jpg|vidnoye.cian.ru
+327281101|3400000|9.0|i|11.3|Каширское|Московская область, Ленинский городской округ, деревня Белеутово, Родниковая улица||uchastok-beleutovo-rodnikovaya-ulica-2816493897-4.jpg|vidnoye.cian.ru
+326138438|2830000|9.0|i|11.5|Каширское|Московская область, Ленинский городской округ, деревня Горки, Летняя улица||uchastok-gorki-letnyaya-ulica-2782407505-4.jpg|vidnoye.cian.ru
+332585982|4500000|6.2|i|11.5|Каширское|Московская область, Ленинский район, Андреевское д., Нагорная ул.|Рузанна Мирзоян|2936182562-4.jpg|vidnoye.cian.ru
+319667502|2200000|10.0|i|11.6|Каширское|Московская область, Ленинский городской округ, деревня Белеутово||uchastok-beleutovo-2558452101-4.jpg|vidnoye.cian.ru</script>
+<script>
+(function () {
+  // ---------- данные ----------
+  var raw = document.getElementById('dataset').textContent.trim().split('\n');
+  var cols = raw.shift().split('|');
+  var DATA = raw.map(function (line) {
+    var p = line.split('|'), o = {};
+    cols.forEach(function (c, i) { o[c] = p[i] || ''; });
+    o.price = +o.price; o.area = +o.area; o.dist = +o.dist;
+    return o;
+  });
+
+  function money(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' '); }
+  function esc(s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+
+  // ---------- отрисовка ----------
+  var grid = document.getElementById('grid');
+  DATA.forEach(function (x, i) {
+    var st = x.status === 'g' ? ['Садоводство', 'snt'] : ['ИЖС', 'izhs'];
+    var img = x.photo ? 'https://images.cdn-cian.ru/images/' + x.photo : '';
+    var url = 'https://' + x.host + '/sale/suburban/' + x.id + '/';
+    var el = document.createElement('article');
+    el.className = 'card';
+    el.dataset.id = x.id; el.dataset.price = x.price;
+    el.dataset.area = x.area; el.dataset.dist = x.dist;
+    el.innerHTML =
+      '<a class="link" href="' + url + '" target="_blank" rel="noopener">' +
+        '<div class="thumb">' +
+          (img ? '<img loading="lazy" src="' + img + '" alt="">' : '<div class="noimg">нет фото</div>') +
+          '<span class="badge ' + st[1] + '">' + st[0] + '</span>' +
+          '<span class="num">' + (i + 1) + '</span>' +
+        '</div>' +
+        '<div class="body">' +
+          '<div class="price">' + money(x.price) + ' ₽</div>' +
+          '<div class="meta"><b>' + x.area + ' сот.</b> · ' + money(Math.round(x.price / x.area)) + ' ₽/сот.</div>' +
+          '<div class="meta dist">≈ ' + x.dist + ' км от МКАД · ' + esc(x.hw) + ' ш.</div>' +
+          '<div class="addr">' + esc(x.addr) + '</div>' +
+          '<div class="seller">' + (esc(x.seller) || '—') + '</div>' +
+        '</div>' +
+      '</a>' +
+      '<div class="marks">' +
+        '<button class="chk" type="button" aria-pressed="false" title="Отметить">' +
+          '<span class="box">✓</span><span class="chk-label">Выбрано</span></button>' +
+        '<div class="stars" role="group" aria-label="Оценка от 1 до 3">' +
+          '<button class="star" type="button" data-v="1" title="1 звезда">★</button>' +
+          '<button class="star" type="button" data-v="2" title="2 звезды">★</button>' +
+          '<button class="star" type="button" data-v="3" title="3 звезды">★</button>' +
+        '</div>' +
+      '</div>';
+    grid.appendChild(el);
+  });
+
+  var prices = DATA.map(function (x) { return x.price; }).sort(function (a, b) { return a - b; });
+  var izhs = DATA.filter(function (x) { return x.status === 'i'; }).length;
+  document.getElementById('totalN').textContent = DATA.length;
+  document.getElementById('splitN').textContent = izhs + ' / ' + (DATA.length - izhs);
+  document.getElementById('medN').textContent = money(prices[Math.floor(prices.length / 2)]) + ' ₽';
+
+  // ---------- отметки ----------
+  var KEY = 'cian-uchastki-marks-v1';
+  var state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { state = {}; }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  function get(id) { return state[id] || { p: false, s: 0 }; }
+
+  var cards = Array.prototype.slice.call(grid.querySelectorAll('.card'));
+
+  function paint(card) {
+    var id = card.dataset.id, st = get(id);
+    card.classList.toggle('picked', !!st.p);
+    card.querySelector('.chk').setAttribute('aria-pressed', st.p ? 'true' : 'false');
+    card.querySelectorAll('.star').forEach(function (b) {
+      b.classList.toggle('on', +b.dataset.v <= (st.s || 0));
+    });
+  }
+  function counts() {
+    var n = 0;
+    for (var k in state) if (state[k] && state[k].p) n++;
+    document.getElementById('pickedN').textContent = n;
+  }
+
+  cards.forEach(function (card) {
+    var id = card.dataset.id;
+    card.querySelector('.chk').addEventListener('click', function () {
+      var st = get(id); st.p = !st.p; state[id] = st; save(); paint(card); counts(); applyFilter();
+    });
+    card.querySelectorAll('.star').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var st = get(id), v = +b.dataset.v;
+        st.s = (st.s === v) ? 0 : v;      // повторный клик по той же звезде снимает оценку
+        state[id] = st; save(); paint(card); applyFilter();
+      });
+    });
+    paint(card);
+  });
+  counts();
+
+  // ---------- фильтры и сортировка ----------
+  var filter = 'all', sort = 'dist';
+  var fBtns = { all: 'f-all', picked: 'f-picked', star: 'f-star', three: 'f-3' };
+  var sBtns = { dist: 'sortDist', price: 'sortPrice', rate: 'sortRate' };
+  var fNames = { all: 'все участки', picked: 'только с галочкой',
+                 star: 'только со звёздами', three: 'только 3★' };
+  var sNames = { dist: 'по близости к МКАД', price: 'по цене (сначала дешевле)',
+                 rate: 'по оценке (сначала 3★)' };
+
+  function status(shown) {
+    document.getElementById('status').innerHTML =
+      'Показано <b>' + shown + '</b> из ' + cards.length +
+      ' · фильтр: <b>' + fNames[filter] + '</b>' +
+      ' · сортировка: <b>' + sNames[sort] + '</b>';
+  }
+  function applyFilter() {
+    var shown = 0;
+    cards.forEach(function (card) {
+      var st = get(card.dataset.id), show = true;
+      if (filter === 'picked') show = !!st.p;
+      else if (filter === 'star') show = (st.s || 0) > 0;
+      else if (filter === 'three') show = (st.s || 0) === 3;
+      card.classList.toggle('hidden', !show);
+      if (show) shown++;
+    });
+    status(shown);
+  }
+  Object.keys(fBtns).forEach(function (k) {
+    document.getElementById(fBtns[k]).addEventListener('click', function () {
+      filter = k;
+      Object.keys(fBtns).forEach(function (j) {
+        document.getElementById(fBtns[j]).setAttribute('aria-pressed', j === k ? 'true' : 'false');
+      });
+      applyFilter();
+    });
+  });
+  function sortBy(mode) {
+    sort = mode;
+    var arr = cards.slice();
+    arr.sort(function (a, b) {
+      if (mode === 'price') return (+a.dataset.price) - (+b.dataset.price);
+      if (mode === 'rate') {
+        var d = (get(b.dataset.id).s || 0) - (get(a.dataset.id).s || 0);
+        if (d) return d;
+        var pd = (get(b.dataset.id).p ? 1 : 0) - (get(a.dataset.id).p ? 1 : 0);
+        if (pd) return pd;
+      }
+      var dd = (+a.dataset.dist) - (+b.dataset.dist);
+      return dd || (+a.dataset.price) - (+b.dataset.price);
+    });
+    arr.forEach(function (c) { grid.appendChild(c); });
+    Object.keys(sBtns).forEach(function (j) {
+      document.getElementById(sBtns[j]).setAttribute('aria-pressed', j === mode ? 'true' : 'false');
+    });
+    applyFilter();
+  }
+  Object.keys(sBtns).forEach(function (k) {
+    document.getElementById(sBtns[k]).addEventListener('click', function () { sortBy(k); });
+  });
+  applyFilter();
+
+  // ---------- экспорт / импорт / сброс ----------
+  document.getElementById('exportBtn').addEventListener('click', function () {
+    var blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'uchastki-otmetki.json';
+    document.body.appendChild(a); a.click(); a.remove();
+  });
+  document.getElementById('importBtn').addEventListener('click', function () {
+    document.getElementById('importFile').click();
+  });
+  document.getElementById('importFile').addEventListener('change', function (e) {
+    var f = e.target.files && e.target.files[0];
+    if (!f) return;
+    var rd = new FileReader();
+    rd.onload = function () {
+      try {
+        var obj = JSON.parse(rd.result);
+        if (obj && typeof obj === 'object') { state = obj; save(); cards.forEach(paint); counts(); applyFilter(); }
+      } catch (err) {}
+    };
+    rd.readAsText(f);
+    e.target.value = '';
+  });
+  document.getElementById('resetBtn').addEventListener('click', function () {
+    state = {}; save(); cards.forEach(paint); counts(); applyFilter();
+  });
+})();
+</script>
+</body></html>
